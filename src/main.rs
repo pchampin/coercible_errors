@@ -20,22 +20,11 @@ use std::result::Result as StdResult;
 mod error {
     error_chain!{
         errors {
-            InvalidIri(iri: String) {
-                description("invalid iri"),
-                display("invalid iri <{}>", iri),
+            Producer {
+                description("error occuredn in producer"),
             }
-            InvalidLanguageTag(lang: String) {
-                description("invalid language tag"),
-                display("invalid language tag \"{}\"", lang),
-            }
-            OtherError {
-                description("other error"),
-            }
-            GraphError {
-                description("error while quering graph"),
-            }
-            GraphMutationError {
-                description("error while modifying graph"),
+            Consumer {
+                description("error occurent in consumer"),
             }
         }
     }
@@ -71,7 +60,7 @@ pub type OkResult<T> = StdResult<T, Never>;
 /// 
 /// [`Error`]: struct.Error.html
 /// [`Never`]: enum.Never.html
-pub trait MaybeError: Into<Error> + StdError + 'static {}
+pub trait MaybeError: Send + StdError + 'static {}
 impl MaybeError for Error {}
 impl MaybeError for Never {}
 
@@ -85,6 +74,7 @@ impl MergeableErrors<Error, Never> for () { type Outcome = Error; }
 impl MergeableErrors<Never, Error> for () { type Outcome = Error; }
 impl MergeableErrors<Never, Never> for () { type Outcome = Never; }
 
+
 /// A shortcut for building the merged result type,
 /// given one type and two error types,
 /// which must both be either [`Error`] or [`Never`].
@@ -93,21 +83,6 @@ impl MergeableErrors<Never, Never> for () { type Outcome = Never; }
 /// [`Never`]: enum.Never.html
 pub type MergedResult<T, E1, E2> = StdResult<T, <() as MergeableErrors<E1, E2>>::Outcome>;
 
-
-
-// This trait is useful for pipe1.
-pub trait MaybeResultExt<T> {
-    fn lift(self) -> Result<T>;
-}
-
-impl<T, E: MaybeError> MaybeResultExt<T> for StdResult<T, E> {
-    fn lift(self) -> Result<T> {
-        match self {
-            Ok(v) => Ok(v),
-            Err(maybe) => Err(maybe.into()),
-        }
-    }
-}
 
 /// Extension trait for merging a result into
 /// the most specific supertype of E1 and E2,
@@ -189,7 +164,8 @@ impl Consumer for u8 {
 
 
 fn pipe1<P: Producer, C: Consumer>(p: &P, c: &mut C)-> Result<()> {
-    c.consume(p.produce().lift()?).lift()
+    let v = p.produce().chain_err(|| ErrorKind::Producer)?;
+    c.consume(v).chain_err(|| ErrorKind::Consumer)
 }
 
 fn pipe2<P: Producer, C: Consumer>(p: &P, c: &mut C)
