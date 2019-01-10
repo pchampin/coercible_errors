@@ -71,27 +71,31 @@ pub type OkResult<T> = StdResult<T, Never>;
 /// 
 /// [`Error`]: struct.Error.html
 /// [`Never`]: enum.Never.html
-pub trait MaybeError: Into<Error> + Into<Never> + StdError + 'static {}
+pub trait MaybeError: Into<Error> + StdError + 'static {}
 impl MaybeError for Error {}
 impl MaybeError for Never {}
 
 /// A utility trait for merging two types of [`MaybeError`](trait.MaybeError.html).
 /// 
 /// It will generally not be used directly,
-/// but through [`Merge`](type.Merge.html)
-pub trait MaybeErrorPair<E1, E2> { type Super: MaybeError + From<E1> + From<E2>; }
-impl MaybeErrorPair<Error, Error> for () { type Super = Error; }
-impl MaybeErrorPair<Error, Never> for () { type Super = Error; }
-impl MaybeErrorPair<Never, Error> for () { type Super = Error; }
-impl MaybeErrorPair<Never, Never> for () { type Super = Never; }
+/// but through [`MergedResult`](type.MergedResult.html)
+pub trait MergeableErrors<E1, E2> { type Outcome: MaybeError + From<E1> + From<E2>; }
+impl MergeableErrors<Error, Error> for () { type Outcome = Error; }
+impl MergeableErrors<Error, Never> for () { type Outcome = Error; }
+impl MergeableErrors<Never, Error> for () { type Outcome = Error; }
+impl MergeableErrors<Never, Never> for () { type Outcome = Never; }
 
-/// A shortcut for determining the most general supertype of `E1` and `E2`,
-/// which must both be either [`Error`] or [`Never`].resiter
+/// A shortcut for building the merged result type,
+/// given one type and two error types,
+/// which must both be either [`Error`] or [`Never`].
 /// 
 /// [`Error`]: struct.Error.html
 /// [`Never`]: enum.Never.html
-pub type Merge<T, E1, E2> = StdResult<T, <() as MaybeErrorPair<E1, E2>>::Super>;
+pub type MergedResult<T, E1, E2> = StdResult<T, <() as MergeableErrors<E1, E2>>::Outcome>;
 
+
+
+// This trait is useful for pipe1.
 pub trait MaybeResultExt<T> {
     fn lift(self) -> Result<T>;
 }
@@ -105,29 +109,34 @@ impl<T, E: MaybeError> MaybeResultExt<T> for StdResult<T, E> {
     }
 }
 
-pub trait MaybeResultExt2<T, E1, E2> {
-    fn lift2(self) -> Merge<T, E1, E2> where
-        (): MaybeErrorPair<E1, E2>
+/// Extension trait for merging a result into
+/// the most specific supertype of E1 and E2,
+/// where both are either [`Error`] or [`Never`].
+/// 
+/// [`Error`]: struct.Error.html
+/// [`Never`]: enum.Never.html
+pub trait MergeableResult<T, E1, E2> {
+    fn merge_result(self) -> MergedResult<T, E1, E2> where
+        (): MergeableErrors<E1, E2>
     ;
 }
-
-impl<T> MaybeResultExt2<T, Error, Error> for StdResult<T, Error> {
-    fn lift2(self) -> Merge<T, Error, Error> { self }
+impl<T> MergeableResult<T, Error, Error> for StdResult<T, Error> {
+    fn merge_result(self) -> Result<T> { self }
 }
-impl<T> MaybeResultExt2<T, Never, Error> for StdResult<T, Error> {
-    fn lift2(self) -> Merge<T, Never, Error> { self }
+impl<T> MergeableResult<T, Never, Error> for StdResult<T, Error> {
+    fn merge_result(self) -> Result<T> { self }
 }
-impl<T> MaybeResultExt2<T, Error, Never> for StdResult<T, Error> {
-    fn lift2(self) -> Merge<T, Error, Never> { self }
+impl<T> MergeableResult<T, Error, Never> for StdResult<T, Error> {
+    fn merge_result(self) -> Result<T> { self }
 }
-impl<T> MaybeResultExt2<T, Error, Never> for StdResult<T, Never> {
-    fn lift2(self) -> Merge<T, Error, Never> { self.lift() }
+impl<T> MergeableResult<T, Error, Never> for StdResult<T, Never> {
+    fn merge_result(self) -> Result<T> { self.map_err(|e| e.into()) }
 }
-impl<T> MaybeResultExt2<T, Never, Error> for StdResult<T, Never> {
-    fn lift2(self) -> Merge<T, Never, Error> { self.lift() }
+impl<T> MergeableResult<T, Never, Error> for StdResult<T, Never> {
+    fn merge_result(self) -> Result<T> { self.map_err(|e| e.into()) }
 }
-impl<T> MaybeResultExt2<T, Never, Never> for StdResult<T, Never> {
-    fn lift2(self) -> Merge<T, Never, Never> { self }
+impl<T> MergeableResult<T, Never, Never> for StdResult<T, Never> {
+    fn merge_result(self) -> OkResult<T> { self }
 }
 
 
@@ -177,20 +186,30 @@ impl Consumer for u8 {
     }
 }
 
+
+
 fn pipe1<P: Producer, C: Consumer>(p: &P, c: &mut C)-> Result<()> {
     c.consume(p.produce().lift()?).lift()
 }
 
 fn pipe2<P: Producer, C: Consumer>(p: &P, c: &mut C)
-    -> Merge<(), P::Error, C::Error>
+    -> MergedResult<(), P::Error, C::Error>
 where
-    (): MaybeErrorPair<P::Error, C::Error>,
-    StdResult<u16, P::Error>: MaybeResultExt2<u16, P::Error, C::Error>,
-    StdResult<(),  C::Error>: MaybeResultExt2<(),  P::Error, C::Error>,
+    (): MergeableErrors<P::Error, C::Error>,
+    StdResult<u16, P::Error>: MergeableResult<u16, P::Error, C::Error>,
+    StdResult<(),  C::Error>: MergeableResult<(),  P::Error, C::Error>,
+    // this is the overhead of this solution:
+    // smart functions merging results have to ensure that
+    // all inner results are actually mergeable...
+    //
+    // NB; this is only required for generic functions;
+    // concrete types can be infered to satify the constraints above...
 {
-    c.consume(p.produce().lift2()?).lift2()
-    //unimplemented!()
+    c.consume(p.produce().merge_result()?).merge_result()
 }
+
+
+
 
 fn main() -> Result<()> {
     println!("Result<u16>  : {} bytes", std::mem::size_of::<Result<u8>>());
