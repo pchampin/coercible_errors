@@ -193,9 +193,10 @@ where
 }
 
 fn main() -> Result<()> {
-    println!("Result<u16>: {}", std::mem::size_of::<Result<u8>>());
-    println!("Ok<u16>: {}", std::mem::size_of::<OkResult<u8>>());
-    println!("Ok<()>: {}", std::mem::size_of::<OkResult<()>>());
+    println!("Result<u16>  : {} bytes", std::mem::size_of::<Result<u8>>());
+    println!("Result<()>   : {} bytes", std::mem::size_of::<Result<u8>>());
+    println!("OkResult<u16>: {} bytes", std::mem::size_of::<OkResult<u8>>());
+    println!("OkResult<()> : {} bytes", std::mem::size_of::<OkResult<()>>());
 
     let mut cons8: u8 = 0;
     let mut cons16: u16 = 0;
@@ -245,7 +246,7 @@ fn main() -> Result<()> {
 
     let r5: Result<()> = pipe1(&0x20000_u32, &mut cons8);
     let r6: Result<()> = pipe1(&0x200_u16,   &mut cons8);
-    println!("{:?}\n{:?}\n", r5, r6);
+    //println!("{:?}\n{:?}\n", r5, r6);
     assert!(r5.is_err());
     assert!(r6.is_err());
 
@@ -261,9 +262,11 @@ fn main() -> Result<()> {
 
     let r5: Result<()> = pipe2(&0x20000_u32, &mut cons8);
     let r6: Result<()> = pipe2(&0x200_u16,   &mut cons8);
-    println!("{:?}\n{:?}\n", r5, r6);
+    //println!("{:?}\n{:?}\n", r5, r6);
     assert!(r5.is_err());
     assert!(r6.is_err());
+
+    println!("All tests passed", );
 
     Ok(())
 }
