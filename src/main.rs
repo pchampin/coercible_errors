@@ -63,15 +63,13 @@ pub type OkResult<T> = StdResult<T, Never>;
 
 
 /// A utility trait for merging two types of errors.
-/// 
-/// Note that the type implementing the trait is not relevant;
-/// the trait is only used to provide a mapping table
-/// from Error×Error to Error.
-pub trait MergeableErrors<E1, E2> { type Outcome: Send + StdError + 'static; }
-impl MergeableErrors<Error, Error> for () { type Outcome = Error; }
-impl MergeableErrors<Error, Never> for () { type Outcome = Error; }
-impl MergeableErrors<Never, Error> for () { type Outcome = Error; }
-impl MergeableErrors<Never, Never> for () { type Outcome = Never; }
+pub trait MergesWith<E>: Sized {
+    type Into: Send + StdError + 'static + From<Self> + From<E>;
+}
+impl MergesWith<Error> for Error { type Into = Error; }
+impl MergesWith<Error> for Never { type Into = Error; }
+impl MergesWith<Never> for Error { type Into = Error; }
+impl MergesWith<Never> for Never { type Into = Never; }
 
 
 /// A shortcut for building the merged result type,
@@ -80,38 +78,7 @@ impl MergeableErrors<Never, Never> for () { type Outcome = Never; }
 /// 
 /// [`Error`]: struct.Error.html
 /// [`Never`]: enum.Never.html
-pub type MergedResult<T, E1, E2> = StdResult<T, <() as MergeableErrors<E1, E2>>::Outcome>;
-
-
-/// Extension trait for merging a result into
-/// the most specific supertype of E1 and E2,
-/// where both are either [`Error`] or [`Never`].
-/// 
-/// [`Error`]: struct.Error.html
-/// [`Never`]: enum.Never.html
-pub trait MergeableResult<T, E1, E2> {
-    fn merge_result(self) -> MergedResult<T, E1, E2> where
-        (): MergeableErrors<E1, E2>
-    ;
-}
-impl<T> MergeableResult<T, Error, Error> for StdResult<T, Error> {
-    #[inline] fn merge_result(self) -> Result<T> { self }
-}
-impl<T> MergeableResult<T, Never, Error> for StdResult<T, Error> {
-    #[inline] fn merge_result(self) -> Result<T> { self }
-}
-impl<T> MergeableResult<T, Error, Never> for StdResult<T, Error> {
-    #[inline] fn merge_result(self) -> Result<T> { self }
-}
-impl<T> MergeableResult<T, Error, Never> for StdResult<T, Never> {
-    #[inline] fn merge_result(self) -> Result<T> { Ok(self.unwrap()) }
-}
-impl<T> MergeableResult<T, Never, Error> for StdResult<T, Never> {
-    #[inline] fn merge_result(self) -> Result<T> { Ok(self.unwrap()) }
-}
-impl<T> MergeableResult<T, Never, Never> for StdResult<T, Never> {
-    #[inline] fn merge_result(self) -> OkResult<T> { self }
-}
+pub type MergedResult<T, E1, E2> = StdResult<T, <E1 as MergesWith<E2>>::Into>;
 
 
 pub trait Producer {
@@ -189,25 +156,9 @@ fn pipe1<P: Producer, C: Consumer>(p: &P, c: &mut C)-> Result<()> {
 fn pipe2<P: Producer, C: Consumer>(p: &P, c: &mut C)
     -> MergedResult<(), P::Error, C::Error>
 where
-    (): MergeableErrors<P::Error, C::Error>,
-    StdResult<u16, P::Error>: MergeableResult<u16, P::Error, C::Error>,
-    StdResult<(),  C::Error>: MergeableResult<(),  P::Error, C::Error>,
-    // This is the first overhead (for the developer) of this solution:
-    // smart functions merging results have to ensure that
-    // - both the producer and the consumer use either Error or Never
-    //   (as we can not force it in the trait definitions)
-    //   and that,
-    // - all intermediate results are actually mergeable.
-    //
-    // This might possibly be automated by a procedural macro?
-    //
-    // NB; this is only required for generic functions;
-    // concrete types can be infered to satify the constraints above...
+    P::Error: MergesWith<C::Error>,
 {
-    c.consume(p.produce().merge_result()?).merge_result()
-    // The other overhead (for the developer) is that
-    // the intermediate must be explicitly converted,
-    // using the merge_result() method.
+    Ok(c.consume(p.produce()?)?)
 }
 
 
