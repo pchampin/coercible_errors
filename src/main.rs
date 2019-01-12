@@ -66,10 +66,8 @@ pub type OkResult<T> = StdResult<T, Never>;
 pub trait MergesWith<E>: Sized {
     type Into: Send + StdError + 'static + From<Self> + From<E>;
 }
-impl MergesWith<Error> for Error { type Into = Error; }
-impl MergesWith<Error> for Never { type Into = Error; }
-impl MergesWith<Never> for Error { type Into = Error; }
-impl MergesWith<Never> for Never { type Into = Never; }
+impl<T: Send + StdError + 'static> MergesWith<Error> for T where Error: From<T> { type Into = Error; }
+impl<T: Send + StdError + 'static> MergesWith<Never> for T where T: From<Never> { type Into = T; }
 
 
 /// A shortcut for building the merged result type,
