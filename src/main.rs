@@ -17,11 +17,9 @@
 //! (those returning a "merged result")
 //! could possibly also be generated, by a procedural macro,
 //! but that's beyond my macro skills for the moment.
-
+//! 
 #[macro_use] extern crate error_chain;
-
-use std::error::Error as StdError;
-use std::result::Result as StdResult;
+#[macro_use] extern crate mergeable_errors;
 
 mod error {
     error_chain!{
@@ -34,49 +32,12 @@ mod error {
             }
         }
     }
+    mergeable_errors!{}
+
 }
 
 use self::error::*;
-
-/// An "error" type that can never happen.
-///
-/// NB: once the [`never`] types reaches *stable*,
-/// this type will be an alias for the standard type.
-///
-/// [`never`]: https://doc.rust-lang.org/std/primitive.never.html
-///
-#[derive(Clone, Debug)]
-pub enum Never {}
-impl ::std::fmt::Display for Never {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "Never")
-    }
-}
-impl StdError for Never {}
-// This conversion can never happen (since Never can have no value),
-// but it is required for using `?` with `OkResult`s.
-impl From<Never> for Error {
-    fn from(_: Never) -> Error { unreachable!() }
-}
-/// Type alias for a result that will never fail.
-pub type OkResult<T> = StdResult<T, Never>;
-
-
-/// A utility trait for merging two types of errors.
-pub trait MergesWith<E>: Sized {
-    type Into: Send + StdError + 'static + From<Self> + From<E>;
-}
-impl<T: Send + StdError + 'static> MergesWith<Error> for T where Error: From<T> { type Into = Error; }
-impl<T: Send + StdError + 'static> MergesWith<Never> for T where T: From<Never> { type Into = T; }
-
-
-/// A shortcut for building the merged result type,
-/// given one value type and two error types,
-/// which must both be either [`Error`] or [`Never`].
-/// 
-/// [`Error`]: struct.Error.html
-/// [`Never`]: enum.Never.html
-pub type MergedResult<T, E1, E2> = StdResult<T, <E1 as MergesWith<E2>>::Into>;
+use std::result::Result as StdResult;
 
 
 pub trait Producer {
@@ -85,7 +46,7 @@ pub trait Producer {
     /// 
     /// [`Error`]: struct.Error.html
     /// [`Never`]: enum.Never.html
-    type Error: Send + StdError + 'static;
+    type Error: MergesWith<Error>;
 
     /// Produce a value.
     fn produce(&self) -> StdResult<u16, Self::Error>;
@@ -108,7 +69,7 @@ impl Producer for u32 {
 }
 
 pub trait Consumer {
-    type Error: Send + StdError + 'static;
+    type Error: MergesWith<Error>;
     fn consume(&mut self, val: u16) -> StdResult<(), Self::Error>;
 }
 
@@ -158,8 +119,6 @@ where
 {
     Ok(c.consume(p.produce()?)?)
 }
-
-
 
 
 fn main() -> Result<()> {

@@ -1,5 +1,5 @@
 [package]
-name = "test_fail"
+name = "mergeable_errors"
 version = "0.1.0"
 authors = ["Pierre-Antoine Champin <pchampin@liris.cnrs.fr>"]
 edition = "2018"
