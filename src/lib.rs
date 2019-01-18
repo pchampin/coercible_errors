@@ -31,7 +31,7 @@ macro_rules! mergeable_errors {
         /// 
         /// In practice, the only two error types that it handles are `$error` or `Never`.
         pub trait $merges_with<E>: Sized + std::marker::Send + std::error::Error + 'static {
-            type Into: std::marker::Send + std::error::Error + 'static + From<Self> + From<E> + MergesWith<Error>;
+            type Into: std::marker::Send + std::error::Error + 'static + From<Self> + From<E> + MergesWith<$error>;
         }
         impl $merges_with<$error> for $error { type Into = $error; }
         impl $merges_with<Never>  for $error { type Into = $error; }
