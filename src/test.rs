@@ -1,5 +1,5 @@
 mod error {
-    error_chain!{
+    error_chain! {
         errors {
             Producer {
                 description("error occuredn in producer"),
@@ -9,7 +9,7 @@ mod error {
             }
         }
     }
-    mergeable_errors!{}
+    mergeable_errors! {}
 
 }
 
@@ -19,7 +19,7 @@ use std::result::Result as StdResult;
 pub trait Producer {
     /// The error type that this producer can raise.
     /// Must be either [`Error`] or [`Never`].
-    /// 
+    ///
     /// [`Error`]: struct.Error.html
     /// [`Never`]: enum.Never.html
     type Error: MergesWith<Error>;
@@ -30,7 +30,9 @@ pub trait Producer {
 
 impl Producer for u16 {
     type Error = Never;
-    fn produce(&self) -> StdResult<u16, Self::Error> { Ok(*self) }
+    fn produce(&self) -> StdResult<u16, Self::Error> {
+        Ok(*self)
+    }
 }
 
 impl Producer for u32 {
@@ -52,7 +54,7 @@ pub trait Consumer {
 impl Consumer for u16 {
     /// The error type that this producer can raise.
     /// Must be either [`Error`] or [`Never`].
-    /// 
+    ///
     /// [`Error`]: struct.Error.html
     /// [`Never`]: enum.Never.html
     type Error = Never;
@@ -76,22 +78,22 @@ impl Consumer for u8 {
     }
 }
 
-pub struct PMax<P1, P2> (P1, P2);
+pub struct PMax<P1, P2>(P1, P2);
 
 impl<P1: Producer, P2: Producer> Producer for PMax<P1, P2>
-    where P1::Error: MergesWith<P2::Error>
+where
+    P1::Error: MergesWith<P2::Error>,
 {
     type Error = MergedError<P1::Error, P2::Error>;
     fn produce(&self) -> MergedResult<u16, P1::Error, P2::Error> {
         Ok(self.0.produce()?.max(self.1.produce()?))
     }
-
 }
 
 /// This is the naive version of pipe;
 /// it always returns a `Result`,
 /// even if both the producer and the consumer return `OkResult`s.
-fn pipe1<P: Producer, C: Consumer>(p: &P, c: &mut C)-> Result<()> {
+fn pipe1<P: Producer, C: Consumer>(p: &P, c: &mut C) -> Result<()> {
     let v = p.produce().chain_err(|| ErrorKind::Producer)?;
     c.consume(v).chain_err(|| ErrorKind::Consumer)
 }
@@ -99,8 +101,7 @@ fn pipe1<P: Producer, C: Consumer>(p: &P, c: &mut C)-> Result<()> {
 /// This is the smart version of pipe;
 /// it returns the smallest possible result (`Result` or `OkResult`),
 /// based on what the producer and the consumer return.
-fn pipe2<P: Producer, C: Consumer>(p: &P, c: &mut C)
-    -> MergedResult<(), P::Error, C::Error>
+fn pipe2<P: Producer, C: Consumer>(p: &P, c: &mut C) -> MergedResult<(), P::Error, C::Error>
 where
     P::Error: MergesWith<C::Error>,
 {
@@ -124,16 +125,16 @@ fn test() -> Result<()> {
     let _r: Result<()> = pipe1(&42_u32, &mut cons8);
 
     let _r: Result<()> = pipe1(&0x20000_u32, &mut cons8);
-    let _r: Result<()> = pipe1(&0x200_u16,   &mut cons8);
+    let _r: Result<()> = pipe1(&0x200_u16, &mut cons8);
 
     // this is already a good thing,
     // because only methods needing to *merge* errors
     // need to fallback to Error;
     // simple methods may still use Self::Error, e.g.:
     let _r: OkResult<u16> = 42_u16.produce();
-    let _r: OkResult<()> = cons16.consume(42);
-    let _r: Result<u16> = 42_u32.produce();
-    let _r: Result<()> = cons8.consume(42);
+    let _r: OkResult<()>  = cons16.consume(42);
+    let _r: Result<u16>   = 42_u32.produce();
+    let _r: Result<()>    = cons8.consume(42);
 
     // ########## pipe2 ##########
     // pipe2 infers the minimal type from its arguments
@@ -142,16 +143,14 @@ fn test() -> Result<()> {
     let _r: Result<()>   = pipe2(&42_u32, &mut cons16);
     let _r: Result<()>   = pipe2(&42_u32, &mut cons8);
 
-
     let _r: Result<()>   = pipe2(&0x20000_u32, &mut cons8);
-    let _r: Result<()>   = pipe2(&0x200_u16,   &mut cons8);
+    let _r: Result<()>   = pipe2(&0x200_u16, &mut cons8);
 
     // ######## PMax ########
     let _r: OkResult<u16> = PMax(42_u16, 1_u16).produce();
     let _r: Result<u16>   = PMax(42_u32, 1_u16).produce();
     let _r: Result<u16>   = PMax(42_u16, 1_u32).produce();
     let _r: Result<u16>   = PMax(42_u32, 1_u32).produce();
-
 
     // ######## testing the returned values ########
     // (having the correct type is not enough...)
@@ -167,7 +166,7 @@ fn test() -> Result<()> {
     assert!(r4.is_ok());
 
     let r5: Result<()> = pipe1(&0x20000_u32, &mut cons8);
-    let r6: Result<()> = pipe1(&0x200_u16,   &mut cons8);
+    let r6: Result<()> = pipe1(&0x200_u16, &mut cons8);
     //println!("{:?}\n{:?}", r5, r6);
     assert!(r5.is_err());
     assert!(r6.is_err());
@@ -183,7 +182,7 @@ fn test() -> Result<()> {
     assert!(r4.is_ok());
 
     let r5: Result<()> = pipe2(&0x20000_u32, &mut cons8);
-    let r6: Result<()> = pipe2(&0x200_u16,   &mut cons8);
+    let r6: Result<()> = pipe2(&0x200_u16, &mut cons8);
     //println!("{:?}\n{:?}", r5, r6);
     assert!(r5.is_err());
     assert!(r6.is_err());
@@ -198,8 +197,7 @@ fn test() -> Result<()> {
     assert!(r3.unwrap() == 42);
     assert!(r4.unwrap() == 42);
 
-
-    println!("All tests passed", );
+    println!("All tests passed",);
 
     Ok(())
 }
