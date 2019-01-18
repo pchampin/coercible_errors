@@ -17,16 +17,16 @@ macro_rules! mergeable_errors {
         }
 
 
-        /// A trait indicating mergeability with another type.
+        /// A trait used to determine how to best merge two error types.
+        /// 
+        /// In practice, the only two error types that it handles are `$error` or `Never`.
         pub trait $merges_with<E>: Sized + std::marker::Send + std::error::Error + 'static {
-            type Into: std::marker::Send + std::error::Error + 'static + From<Self> + From<E>;
+            type Into: std::marker::Send + std::error::Error + 'static + From<Self> + From<E> + MergesWith<Error>;
         }
-        impl<T: std::marker::Send + std::error::Error + 'static> $merges_with<$error> for T
-            where $error: From<T>
-        { type Into = $error; }
-        impl<T: std::marker::Send + std::error::Error + 'static> $merges_with<Never> for T
-            where T: From<Never>
-        { type Into = T; }
+        impl $merges_with<$error> for $error { type Into = $error; }
+        impl $merges_with<Never>  for $error { type Into = $error; }
+        impl $merges_with<$error> for Never  { type Into = $error; }
+        impl $merges_with<Never>  for Never  { type Into = Never;  }
 
 
         /// A shortcut for building the merged error type,
