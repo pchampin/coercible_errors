@@ -5,9 +5,9 @@ macro_rules! mergeable_errors {
         mergeable_errors!(Error);
     };
     ($error: ty) => {
-        mergeable_errors!($error, MergesWith, MergedResult);
+        mergeable_errors!($error, MergesWith, MergedError, MergedResult);
     };
-    ($error: ty, $merges_with: ident, $merged_result: ident) => {
+    ($error: ty, $merges_with: ident, $merged_error: ident, $merged_result: ident) => {
         pub use mergeable_errors::{Never, OkResult};
 
         // This conversion can never happen (since Never can have no value),
@@ -29,12 +29,19 @@ macro_rules! mergeable_errors {
         { type Into = T; }
 
 
+        /// A shortcut for building the merged error type,
+        /// given two error types,
+        /// which must both be either `$error` or [`$never`].
+        /// 
+        /// [`$never`]: enum.$never.html
+        pub type $merged_error<E1, E2> = <E1 as $merges_with<E2>>::Into;
+
         /// A shortcut for building the merged result type,
         /// given one value type and two error types,
         /// which must both be either `$error` or [`$never`].
         /// 
         /// [`$never`]: enum.$never.html
-        pub type $merged_result<T, E1, E2> = std::result::Result<T, <E1 as $merges_with<E2>>::Into>;
+        pub type $merged_result<T, E1, E2> = std::result::Result<T, $merged_error<E1, E2>>;
     };
 }
 
