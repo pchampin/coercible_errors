@@ -8,7 +8,7 @@ macro_rules! mergeable_errors {
         mergeable_errors!($error, MergesWith, MergedError, MergedResult);
     };
     ($error: ty, $merges_with: ident, $merged_error: ident, $merged_result: ident) => {
-        pub use mergeable_errors::{Never, OkResult};
+        pub use $crate::{Never, OkResult};
 
         // This conversion can never happen (since Never can have no value),
         // but it is required for allowing $error and Never to merge with each other.
