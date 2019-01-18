@@ -1,3 +1,13 @@
+//! Zero-cost error handling for abstract traits.
+
+/// Sets up mergeable_errors for a previously defined error type.
+/// 
+/// It re-exports the types [`Never`] and [`OkResults`],
+/// and defines three new traits and types `MergesWith`,
+/// `MergedError` and `MergedResult`.
+/// 
+/// [`Never`]: enum.Never.html
+/// [`OkResult`]: type.OkResult.html
 #[macro_export]
 macro_rules! mergeable_errors {
 
@@ -31,16 +41,12 @@ macro_rules! mergeable_errors {
 
         /// A shortcut for building the merged error type,
         /// given two error types,
-        /// which must both be either `$error` or [`$never`].
-        /// 
-        /// [`$never`]: enum.$never.html
+        /// which must both be either `$error` or `Never`.
         pub type $merged_error<E1, E2> = <E1 as $merges_with<E2>>::Into;
 
         /// A shortcut for building the merged result type,
         /// given one value type and two error types,
-        /// which must both be either `$error` or [`$never`].
-        /// 
-        /// [`$never`]: enum.$never.html
+        /// which must both be either `$error` or `Never`.
         pub type $merged_result<T, E1, E2> = std::result::Result<T, $merged_error<E1, E2>>;
     };
 }
@@ -65,4 +71,5 @@ impl std::error::Error for Never {}
 /// Type alias for a result that will Never fail.
 pub type OkResult<T> = std::result::Result<T, Never>;
 
-
+#[cfg(feature = "example_generated")]
+pub mod example_generated;
