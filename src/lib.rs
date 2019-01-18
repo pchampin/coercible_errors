@@ -86,3 +86,9 @@ pub type OkResult<T> = std::result::Result<T, Never>;
 
 #[cfg(feature = "example_generated")]
 pub mod example_generated;
+
+#[cfg(test)]
+#[macro_use] extern crate error_chain;
+
+#[cfg(test)]
+mod test;

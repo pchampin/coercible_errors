@@ -1,26 +1,3 @@
-//! This crate is an exploration for building
-//! a zero-cost error-handling for generic type.
-//! 
-//! The idea is that:
-//! the methods of a generic type should return Results,
-//! to account for implementation that may fail.
-//! But *some* implementations may never fail,
-//! and those would be penalized
-//! by the overhead of wrapping their returned values into Results.
-//! 
-//! To avoid that, teach the compiler to merge two errors into the minimal supertype.
-//! 
-//! The scaffolding is entierly deterministic,
-//! so it could be provided by a simple macro.
-//! 
-//! The boilerplate to be included in "smart functions"
-//! (those returning a "merged result")
-//! could possibly also be generated, by a procedural macro,
-//! but that's beyond my macro skills for the moment.
-//! 
-#[macro_use] extern crate error_chain;
-#[macro_use] extern crate mergeable_errors;
-
 mod error {
     error_chain!{
         errors {
@@ -38,7 +15,6 @@ mod error {
 
 use self::error::*;
 use std::result::Result as StdResult;
-
 
 pub trait Producer {
     /// The error type that this producer can raise.
@@ -131,12 +107,11 @@ where
     Ok(c.consume(p.produce()?)?)
 }
 
-
-fn main() -> Result<()> {
-    println!("Result<u16>  : {} bytes", std::mem::size_of::<Result<u16>>());
-    println!("OkResult<u16>: {} bytes", std::mem::size_of::<OkResult<u16>>());
-    println!("Result<()>   : {} bytes", std::mem::size_of::<Result<()>>());
-    println!("OkResult<()> : {} bytes", std::mem::size_of::<OkResult<()>>());
+#[test]
+fn test() -> Result<()> {
+    // NB: most of this test is actually performed at compile time:
+    // we check that the merged result types are as expected
+    // (Result<_> or OkResult<_>).
 
     let mut cons8: u8 = 0;
     let mut cons16: u16 = 0;
