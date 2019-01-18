@@ -100,6 +100,17 @@ impl Consumer for u8 {
     }
 }
 
+pub struct PMax<P1, P2> (P1, P2);
+
+impl<P1: Producer, P2: Producer> Producer for PMax<P1, P2>
+    where P1::Error: MergesWith<P2::Error>
+{
+    type Error = MergedError<P1::Error, P2::Error>;
+    fn produce(&self) -> MergedResult<u16, P1::Error, P2::Error> {
+        Ok(self.0.produce()?.max(self.1.produce()?))
+    }
+
+}
 
 /// This is the naive version of pipe;
 /// it always returns a `Result`,
@@ -149,7 +160,7 @@ fn main() -> Result<()> {
     let _r: Result<u16> = 42_u32.produce();
     let _r: Result<()> = cons8.consume(42);
 
-    // ########## pipe1 ##########
+    // ########## pipe2 ##########
     // pipe2 infers the minimal type from its arguments
     let _r: OkResult<()> = pipe2(&42_u16, &mut cons16);
     let _r: Result<()>   = pipe2(&42_u16, &mut cons8);
@@ -159,6 +170,13 @@ fn main() -> Result<()> {
 
     let _r: Result<()>   = pipe2(&0x20000_u32, &mut cons8);
     let _r: Result<()>   = pipe2(&0x200_u16,   &mut cons8);
+
+    // ######## PMax ########
+    let _r: OkResult<u16> = PMax(42_u16, 1_u16).produce();
+    let _r: Result<u16>   = PMax(42_u32, 1_u16).produce();
+    let _r: Result<u16>   = PMax(42_u16, 1_u32).produce();
+    let _r: Result<u16>   = PMax(42_u32, 1_u32).produce();
+
 
     // ######## testing the returned values ########
     // (having the correct type is not enough...)
@@ -194,6 +212,17 @@ fn main() -> Result<()> {
     //println!("{:?}\n{:?}", r5, r6);
     assert!(r5.is_err());
     assert!(r6.is_err());
+
+    let r1: OkResult<u16> = PMax(42_u16, 1_u16).produce();
+    let r2: Result<u16>   = PMax(42_u32, 1_u16).produce();
+    let r3: Result<u16>   = PMax(42_u16, 1_u32).produce();
+    let r4: Result<u16>   = PMax(42_u32, 1_u32).produce();
+    //println!("{:?} {:?} {:?} {:?}", r1, r2, r3, r4);
+    assert!(r1.unwrap() == 42);
+    assert!(r2.unwrap() == 42);
+    assert!(r3.unwrap() == 42);
+    assert!(r4.unwrap() == 42);
+
 
     println!("All tests passed", );
 
