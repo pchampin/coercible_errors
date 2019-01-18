@@ -1,4 +1,17 @@
-//! Zero-cost error handling for abstract traits.
+//! Zero-cost error handling for generic traits.
+//! 
+//! # Rationale
+//! 
+//! Assume we want to build a crate that defines a generic trait,
+//! meant to be implemented by others.
+//! Some implementations of that trait may always succeed,
+//! others may sometimes fail.
+//! The methods of of the generic trait should therefore return `Result<_,_>`,
+//! but do not want that to create an overhead for infallible implementations
+//! (per the *zero-cose abstraction* motto).
+//! 
+//! See `README.md` for a more detailed explaination.
+
 
 /// Sets up mergeable_errors for a previously defined error type.
 /// 
