@@ -4,13 +4,21 @@
 //!
 //! Assume you want to build a crate that defines a generic trait,
 //! meant to be implemented by others.
-//! Some implementations of that trait may always succeed,
+//! Some implementations of that trait will always succeed,
 //! others may sometimes fail.
 //! The methods of the generic trait should therefore return `Result<_,_>`,
 //! but that should not induce an overhead for infallible implementations
 //! (per the *zero-cost abstraction* motto).
 //!
+//! The [`coercible_errors!`] macro will define a set of traits and types
+//! that you can use to define your generic traits,
+//! in order to keep their error-handling as efficient as possible.
+//! More precisely, the compiler will be able to optimize away the error types
+//! whenever only infallible implementations of the generic trait are used.
+//!
 //! See `README.md` for a more detailed explaination.
+//!
+//! [`coercible_errors!`]: macro.coercible_errors.html
 
 /// Sets up coercible_errors for a previously defined error type.
 ///
