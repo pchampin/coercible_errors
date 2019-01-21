@@ -2,13 +2,13 @@
 //!
 //! # Rationale
 //!
-//! Assume we want to build a crate that defines a generic trait,
+//! Assume you want to build a crate that defines a generic trait,
 //! meant to be implemented by others.
 //! Some implementations of that trait may always succeed,
 //! others may sometimes fail.
-//! The methods of of the generic trait should therefore return `Result<_,_>`,
-//! but do not want that to create an overhead for infallible implementations
-//! (per the *zero-cose abstraction* motto).
+//! The methods of the generic trait should therefore return `Result<_,_>`,
+//! but that should not induce an overhead for infallible implementations
+//! (per the *zero-cost abstraction* motto).
 //!
 //! See `README.md` for a more detailed explaination.
 
