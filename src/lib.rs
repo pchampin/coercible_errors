@@ -42,7 +42,9 @@ macro_rules! coercible_errors {
         /// A trait used to determine how to best coerce two error types.
         ///
         /// In practice, the only two error types that it handles are `$error` or `Never`.
-        pub trait $coercible_with<E>: Sized + std::marker::Send + std::error::Error + 'static {
+        pub trait $coercible_with<E>:
+            Sized + std::marker::Send + std::error::Error + 'static
+        {
             type Into: std::marker::Send
                 + std::error::Error
                 + 'static
