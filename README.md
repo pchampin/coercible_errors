@@ -15,7 +15,7 @@ Below is a minimalist example of such a trait:
     }
 ```
 
-Some implementations might work well with this definitions,
+Some implementations might work well with this definition,
 but other implementations may encounter errors in some situations
 (*e.g.* `IOError` for a file-system based implementation).
 We call the former kind *infallible implementations*,
@@ -112,7 +112,7 @@ The example above would become:
     {
         // compute the most appropriate Error type based on P1 and P2;
         // especially, if P1 and P2 are both infallible,
-        // that PMax will be infallible as well.
+        // PMax will be infallible as well.
         type Error = CoercedError<P1::Error, P2::Error>;
         fn produce(&self) -> Result<u16, Self::Error> {
             Ok(
@@ -130,7 +130,7 @@ The example above would become:
 The `coercible_errors` macro takes care of defining the following traits and types:
 
 * `CoercibleWith<E>` is a trait to let the compiler infer the correct coercing of error types.
-  The macro provides implementations so that [`never`] and [`never`] coerce as [`never`], and that any other combination of [`never`] and `MyError` coerce as `MyError`.
+  The macro provides implementations so that [`never`] and [`never`] coerce into [`never`], and that any other combination of [`never`] and `MyError` coerce into `MyError`.
 * `CoercedError<E1, E2>` is a type alias using `CoercibleWith` to determine the appropriate coerced error type.
 * `CoercedResult<T, E1, E2>` is a shortcut for  `Result<T, CoercedError<E1, E2>>`.
 
@@ -146,3 +146,7 @@ avoiding a breaking change.
 
 [error_chain]: https://docs.rs/error-chain/
 [`never`]: https://doc.rust-lang.org/std/primitive.never.html
+
+## License
+
+[CECILL-2.1](https://opensource.org/licenses/CECILL-2.1)

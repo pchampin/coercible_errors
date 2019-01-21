@@ -1,11 +1,13 @@
 [package]
 name = "coercible_errors"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Pierre-Antoine Champin <pchampin@liris.cnrs.fr>"]
 description = "Zero-cost error handling for generic traits"
 repository = "https://github.com/pchampin/coercible_errors"
-documentation = "https://docs.rs/coercible_errors"
+documentation = "https://docs.rs/coercible_errors/"
 license = "CECILL-2.1"
+readme = "README.md"
+
 edition = "2018"
 
 [dependencies]
