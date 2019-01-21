@@ -12,66 +12,66 @@
 //!
 //! See `README.md` for a more detailed explaination.
 
-/// Sets up mergeable_errors for a previously defined error type.
+/// Sets up coercible_errors for a previously defined error type.
 ///
-/// It re-exports the types [`Never`] and [`OkResults`],
-/// and defines three new traits and types `MergesWith`,
-/// `MergedError` and `MergedResult`.
+/// It re-exports the types [`Never`] and [`OkResult`],
+/// and defines three new traits and types `CoercibleWith`,
+/// `CoercedError` and `CoercedResult`.
 ///
 /// [`Never`]: enum.Never.html
 /// [`OkResult`]: type.OkResult.html
 #[macro_export]
-macro_rules! mergeable_errors {
+macro_rules! coercible_errors {
     () => {
-        mergeable_errors!(Error);
+        coercible_errors!(Error);
     };
     ($error: ty) => {
-        mergeable_errors!($error, MergesWith, MergedError, MergedResult);
+        coercible_errors!($error, CoercibleWith, CoercedError, CoercedResult);
     };
-    ($error: ty, $merges_with: ident, $merged_error: ident, $merged_result: ident) => {
+    ($error: ty, $coercible_with: ident, $coerced_error: ident, $coerced_result: ident) => {
         pub use $crate::{Never, OkResult};
 
         // This conversion can never happen (since Never can have no value),
-        // but it is required for allowing $error and Never to merge with each other.
+        // but it is required for allowing $error and Never to coerce with each other.
         impl From<Never> for $error {
             fn from(_: Never) -> $error {
                 unreachable!()
             }
         }
 
-        /// A trait used to determine how to best merge two error types.
+        /// A trait used to determine how to best coerce two error types.
         ///
         /// In practice, the only two error types that it handles are `$error` or `Never`.
-        pub trait $merges_with<E>: Sized + std::marker::Send + std::error::Error + 'static {
+        pub trait $coercible_with<E>: Sized + std::marker::Send + std::error::Error + 'static {
             type Into: std::marker::Send
                 + std::error::Error
                 + 'static
                 + From<Self>
                 + From<E>
-                + MergesWith<$error>;
+                + $coercible_with<$error>;
         }
-        impl $merges_with<$error> for $error {
+        impl $coercible_with<$error> for $error {
             type Into = $error;
         }
-        impl $merges_with<Never> for $error {
+        impl $coercible_with<Never> for $error {
             type Into = $error;
         }
-        impl $merges_with<$error> for Never {
+        impl $coercible_with<$error> for Never {
             type Into = $error;
         }
-        impl $merges_with<Never> for Never {
+        impl $coercible_with<Never> for Never {
             type Into = Never;
         }
 
-        /// A shortcut for building the merged error type,
+        /// A shortcut for building the coerced error type,
         /// given two error types,
         /// which must both be either `$error` or `Never`.
-        pub type $merged_error<E1, E2> = <E1 as $merges_with<E2>>::Into;
+        pub type $coerced_error<E1, E2> = <E1 as $coercible_with<E2>>::Into;
 
-        /// A shortcut for building the merged result type,
+        /// A shortcut for building the coerced result type,
         /// given one value type and two error types,
         /// which must both be either `$error` or `Never`.
-        pub type $merged_result<T, E1, E2> = std::result::Result<T, $merged_error<E1, E2>>;
+        pub type $coerced_result<T, E1, E2> = std::result::Result<T, $coerced_error<E1, E2>>;
     };
 }
 

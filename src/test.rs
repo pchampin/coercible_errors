@@ -9,7 +9,7 @@ mod error {
             }
         }
     }
-    mergeable_errors! {}
+    coercible_errors! {}
 
 }
 
@@ -22,7 +22,7 @@ pub trait Producer {
     ///
     /// [`Error`]: struct.Error.html
     /// [`Never`]: enum.Never.html
-    type Error: MergesWith<Error>;
+    type Error: CoercibleWith<Error>;
 
     /// Produce a value.
     fn produce(&self) -> StdResult<u16, Self::Error>;
@@ -47,7 +47,7 @@ impl Producer for u32 {
 }
 
 pub trait Consumer {
-    type Error: MergesWith<Error>;
+    type Error: CoercibleWith<Error>;
     fn consume(&mut self, val: u16) -> StdResult<(), Self::Error>;
 }
 
@@ -82,10 +82,10 @@ pub struct PMax<P1, P2>(P1, P2);
 
 impl<P1: Producer, P2: Producer> Producer for PMax<P1, P2>
 where
-    P1::Error: MergesWith<P2::Error>,
+    P1::Error: CoercibleWith<P2::Error>,
 {
-    type Error = MergedError<P1::Error, P2::Error>;
-    fn produce(&self) -> MergedResult<u16, P1::Error, P2::Error> {
+    type Error = CoercedError<P1::Error, P2::Error>;
+    fn produce(&self) -> CoercedResult<u16, P1::Error, P2::Error> {
         Ok(self.0.produce()?.max(self.1.produce()?))
     }
 }
@@ -101,9 +101,9 @@ fn pipe1<P: Producer, C: Consumer>(p: &P, c: &mut C) -> Result<()> {
 /// This is the smart version of pipe;
 /// it returns the smallest possible result (`Result` or `OkResult`),
 /// based on what the producer and the consumer return.
-fn pipe2<P: Producer, C: Consumer>(p: &P, c: &mut C) -> MergedResult<(), P::Error, C::Error>
+fn pipe2<P: Producer, C: Consumer>(p: &P, c: &mut C) -> CoercedResult<(), P::Error, C::Error>
 where
-    P::Error: MergesWith<C::Error>,
+    P::Error: CoercibleWith<C::Error>,
 {
     Ok(c.consume(p.produce()?)?)
 }
@@ -111,7 +111,7 @@ where
 #[test]
 fn test() -> Result<()> {
     // NB: most of this test is actually performed at compile time:
-    // we check that the merged result types are as expected
+    // we check that the coerced result types are as expected
     // (Result<_> or OkResult<_>).
 
     let mut cons8: u8 = 0;
@@ -128,7 +128,7 @@ fn test() -> Result<()> {
     let _r: Result<()> = pipe1(&0x200_u16, &mut cons8);
 
     // this is already a good thing,
-    // because only methods needing to *merge* errors
+    // because only methods needing to *coerce* errors
     // need to fallback to Error;
     // simple methods may still use Self::Error, e.g.:
     let _r: OkResult<u16> = 42_u16.produce();

@@ -1,5 +1,5 @@
 
-# Mergeable errors
+# Coercible errors
 
 Zero-cost error handling for generic traits.
 
@@ -97,26 +97,26 @@ The example above would become:
     pub struct MyError { /* ... */ }
 
     // define appropriate types and traits
-    mergeable_errors!(MyError);
+    coercible_errors!(MyError);
 
     pub trait Producer {
         // require that Producer::Error be either never of MyError
-        type Error: MergesWith<MyError>;
+        type Error: CoercibleWith<MyError>;
         fn produce(&self) -> Result<u16, Self::Error>;
     }
 
     pub struct PMax<P1, P2> (P1, P2);
     impl<P1: Producer, P2: Producer> Producer for PMax<P1, P2> 
-        // this trait bound is required to be able to use MergedError below
-        where P1::Error: MergesWith<P2::Error>
+        // this trait bound is required to be able to use CoercedError below
+        where P1::Error: CoercibleWith<P2::Error>
     {
         // compute the most appropriate Error type based on P1 and P2;
         // especially, if P1 and P2 are both infallible,
         // that PMax will be infallible as well.
-        type Error = MergedError<P1::Error, P2::Error>;
+        type Error = CoercedError<P1::Error, P2::Error>;
         fn produce(&self) -> Result<u16, Self::Error> {
             Ok(
-              // the merged error always implements From<_>
+              // the coerced error always implements From<_>
               // for both P1::Error and P2::Error,
               // so inner errors can simply be lifted with '?'
               self.0.produce()?
@@ -127,20 +127,20 @@ The example above would become:
     }
 ```
 
-The `mergeable_errors` macro takes care of defining the following traits and types:
+The `coercible_errors` macro takes care of defining the following traits and types:
 
-* `MergesWith<E>` is a trait to let the compiler infer the correct merging of error types.
-  The macro provides implementations so that [`never`] and [`never`] merge as [`never`], and that any other combination of [`never`] and `MyError` merge as `MyError`.
-* `MergedError<E1, E2>` is a type alias using `MergesWith` to determine the appropriate merged error type.
-* `MergedResult<T, E1, E2>` is a shortcut for  `Result<T, MergedError<E1, E2>>`.
+* `CoercibleWith<E>` is a trait to let the compiler infer the correct coercing of error types.
+  The macro provides implementations so that [`never`] and [`never`] coerce as [`never`], and that any other combination of [`never`] and `MyError` coerce as `MyError`.
+* `CoercedError<E1, E2>` is a type alias using `CoercibleWith` to determine the appropriate coerced error type.
+* `CoercedResult<T, E1, E2>` is a shortcut for  `Result<T, CoercedError<E1, E2>>`.
 
 
 ### About [`never`]
 
 Since the [`never`] type is currently unstable,
-this crate actually defines its own version called `mergeable_errors::Never`.
+this crate actually defines its own version called `coercible_errors::Never`.
 Once [`never`] becomes stable,
-`mergeable_errors::Never` will become a simple alias to [`never`],
+`coercible_errors::Never` will become a simple alias to [`never`],
 avoiding a breaking change.
 
 
