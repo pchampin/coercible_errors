@@ -149,11 +149,8 @@ avoiding a breaking change.
 
 ## License
 
-[CECILL-2.1]
+[CECILL-B]
 
-(compatible with [GNU GPL], [GNU Affero GPL] & [EUPL])
+(a french variant of the BSD license)
 
-[CECILL-2.1]: https://opensource.org/licenses/CECILL-2.1
-[GNU GPL]: https://opensource.org/licenses/GPL-3.0
-[GNU Affero GPL]: https://opensource.org/licenses/AGPL-3.0
-[EUPL]: https://opensource.org/licenses/EUPL-1.2
+[CECILL-B]: http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html

@@ -1,0 +1,8 @@
+0.1.2
+    Changed license to CECILL-B (french variant of BSD)
+
+0.1.1
+    Updated metadata and README for a better rendering on crates.io
+
+0.1.0
+    Initial release
