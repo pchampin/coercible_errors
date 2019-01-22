@@ -149,4 +149,11 @@ avoiding a breaking change.
 
 ## License
 
-[CECILL-2.1](https://opensource.org/licenses/CECILL-2.1)
+[CECILL-2.1]
+
+(compatible with [GNU GPL], [GNU Affero GPL] & [EUPL])
+
+[CECILL-2.1]: https://opensource.org/licenses/CECILL-2.1
+[GNU GPL]: https://opensource.org/licenses/GPL-3.0
+[GNU Affero GPL]: https://opensource.org/licenses/AGPL-3.0
+[EUPL]: https://opensource.org/licenses/EUPL-1.2
