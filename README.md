@@ -100,8 +100,8 @@ The example above would become:
     coercible_errors!(MyError);
 
     pub trait Producer {
-        // require that Producer::Error be either never of MyError
-        type Error: CoercibleWith<MyError>;
+        // require that Producer::Error be either MyError or never
+        type Error: CoercibleWith<MyError> + CoercibleWith<Never>;
         fn produce(&self) -> Result<u16, Self::Error>;
     }
 

@@ -58,7 +58,8 @@ macro_rules! coercible_errors {
                 + 'static
                 + From<Self>
                 + From<E>
-                + $coercible_with<$error>;
+                + $coercible_with<$error>
+                + $coercible_with<Never>;
         }
         impl $coercible_with<$error> for $error {
             type Into = $error;

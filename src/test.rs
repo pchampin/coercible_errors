@@ -22,7 +22,7 @@ pub trait Producer {
     ///
     /// [`Error`]: struct.Error.html
     /// [`Never`]: enum.Never.html
-    type Error: CoercibleWith<Error>;
+    type Error: CoercibleWith<Error> + CoercibleWith<Never>;
 
     /// Produce a value.
     fn produce(&self) -> StdResult<u16, Self::Error>;
@@ -47,7 +47,7 @@ impl Producer for u32 {
 }
 
 pub trait Consumer {
-    type Error: CoercibleWith<Error>;
+    type Error: CoercibleWith<Error> + CoercibleWith<Never>;
     fn consume(&mut self, val: u16) -> StdResult<(), Self::Error>;
 }
 
