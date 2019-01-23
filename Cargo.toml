@@ -5,6 +5,8 @@ authors = ["Pierre-Antoine Champin <pchampin@liris.cnrs.fr>"]
 description = "Zero-cost error handling for generic traits"
 repository = "https://github.com/pchampin/coercible_errors"
 documentation = "https://docs.rs/coercible_errors/"
+keywords = ["error"]
+categories = ["rust-patterns"]
 license = "CECILL-B"
 readme = "README.md"
 
