@@ -1,3 +1,7 @@
+0.1.4
+    Changed license to CECILL-C (french variant of LGPL)
+    and improved metadata in Cargo.toml
+
 0.1.3
     CoerceWith<Never> should also be explicit (updated macro and examples).
 
