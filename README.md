@@ -149,8 +149,8 @@ avoiding a breaking change.
 
 ## License
 
-[CECILL-B]
+[CECILL-C]
 
-(a french variant of the BSD license)
+(compatible with GNU LGPL)
 
-[CECILL-B]: http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.html
+[CECILL-C]: http://www.cecill.info/licences/Licence_CeCILL-C_V1-en.html

@@ -7,7 +7,7 @@ repository = "https://github.com/pchampin/coercible_errors"
 documentation = "https://docs.rs/coercible_errors/"
 keywords = ["error"]
 categories = ["rust-patterns"]
-license = "CECILL-B"
+license = "CECILL-C"
 readme = "README.md"
 
 edition = "2018"
